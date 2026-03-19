@@ -23,24 +23,37 @@ class UserCreatedHandler(EventHandler):
         return "UserCreated"
     
     def handle(self, event_data: Dict[str, Any]) -> None:
-        """Create an HTML email based on user creation data"""
-
         user_id = event_data.get('id')
         name = event_data.get('name')
         email = event_data.get('email')
         datetime = event_data.get('datetime')
+        user_type_id = event_data.get('user_type_id', 1)
 
         current_file = Path(__file__)
-        project_root = current_file.parent.parent   
-        with open(project_root / "templates" / "welcome_client_template.html", 'r') as file:
+        project_root = current_file.parent.parent
+
+        # 1 = Client, 2 = Employee, 3 = Manager
+        if user_type_id == 1:
+            template = "welcome_client_template.html"
+            message = "Merci d'avoir visité notre magasin. Si vous avez des questions, n'hésitez pas à nous contacter."
+        else:
+            template = "welcome_client_template.html"
+            message = "Salut et bienvenue dans l'équipe ! Nous sommes ravis de t'avoir parmi nous."
+
+        with open(project_root / "templates" / template, 'r') as file:
             html_content = file.read()
-            html_content = html_content.replace("{{user_id}}", str(user_id))
-            html_content = html_content.replace("{{name}}", name)
-            html_content = html_content.replace("{{email}}", email)
-            html_content = html_content.replace("{{creation_date}}", datetime)
-        
+
+        html_content = html_content.replace("{{user_id}}", str(user_id))
+        html_content = html_content.replace("{{name}}", name)
+        html_content = html_content.replace("{{email}}", email)
+        html_content = html_content.replace("{{creation_date}}", datetime)
+        html_content = html_content.replace(
+            "Merci d'avoir visité notre magazin. Si vous avez des questions ou des problèmes concernant votre achat, n'hésitez pas à nous contacter.",
+            message
+        )
+
         filename = os.path.join(self.output_dir, f"welcome_{user_id}.html")
         with open(filename, 'w', encoding='utf-8') as f:
             f.write(html_content)
-        
+
         self.logger.debug(f"Courriel HTML généré à {name} (ID: {user_id}), {filename}")

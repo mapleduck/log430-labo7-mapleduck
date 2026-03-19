@@ -22,14 +22,19 @@ class UserDeletedHandler(EventHandler):
         return "UserDeleted"
 
     def handle(self, event_data: Dict[str, Any]) -> None:
-        """Create an HTML email based on user deletion data"""
         user_id = event_data.get('id')
         name = event_data.get('name')
         email = event_data.get('email')
         deletion_date = event_data.get('datetime')
+        user_type_id = event_data.get('user_type_id', 1)
 
         current_file = Path(__file__)
         project_root = current_file.parent.parent
+
+        if user_type_id == 1:
+            message = "Merci d'avoir été client de notre magasin. Si jamais vous voulez créer une nouvelle compte, n'hésitez pas à nous contacter."
+        else:
+            message = "Nous te souhaitons bonne chance pour la suite de ta carrière. Tu vas nous manquer !"
 
         with open(project_root / "templates" / "goodbye_client_template.html", 'r') as file:
             html_content = file.read()
@@ -38,6 +43,10 @@ class UserDeletedHandler(EventHandler):
         html_content = html_content.replace("{{name}}", name)
         html_content = html_content.replace("{{email}}", email)
         html_content = html_content.replace("{{deletion_date}}", deletion_date)
+        html_content = html_content.replace(
+            "Nous supprimons votre compte à votre demande. Merci d'avoir été client de notre magasin. Si jamais vous voulez créer une nouvelle compte, n'hésitez pas à nous contacter.",
+            message
+        )
 
         filename = os.path.join(self.output_dir, f"goodbye_{user_id}.html")
         with open(filename, 'w', encoding='utf-8') as f:
